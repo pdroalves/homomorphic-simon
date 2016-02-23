@@ -49,7 +49,7 @@ CXXFLAGS 	= 	-I/usr/local/include -I/opt/local/include -O3 -fopenmp
 CXXFLAGS 	+= 	-Wall -pedantic
 LDFLAGS 	= 	-L/opt/local/lib -lgmp -lgmpxx -lcrypto -lm -lmpfr -lflint
 
-SOURCES 	= 	$(wildcard *.cpp)
+SOURCES 	= 	$(filter-out benchmark.cpp, $(wildcard *.cpp))
 HEADERS 	= 	$(wildcard *.h)
 OBJECTS 	= 	$(SOURCES:.cpp=.o)
 EXEC		= 	Simon
@@ -58,7 +58,7 @@ ifeq ($(SCHEME), 1)
 	SOURCES_SCHEME = $(wildcard YASHE/*.cpp)
 	HEADERS_SCHEME = $(wildcard YASHE/*.h)
 	OBJECTS_SCHEME = $(SOURCES_SCHEME:.cpp=.o)
-	CXXFLAGS += -DYASHE
+	CXXFLAGS += -DYASHE -g
 endif
 
 ifeq ($(SCHEME), 2)
@@ -68,10 +68,16 @@ ifeq ($(SCHEME), 2)
 	CXXFLAGS += -DFV
 endif
 
-all: $(SOURCES) $(SOURCES_SCHEME) $(EXEC) 
+all: $(SOURCES) $(SOURCES_SCHEME) $(EXEC) benchmark
 
 $(EXEC): $(OBJECTS) $(OBJECTS_SCHEME)
 	$(CXX) $(CXXFLAGS) -o $(EXEC) $(OBJECTS) $(OBJECTS_SCHEME) $(LDFLAGS)
+
+benchmark: benchmark.o $(OBJECTS) $(OBJECTS_SCHEME)
+	g++ -I/usr/local/include -I/opt/local/include -O3 -fopenmp -Wall -pedantic -DYASHE -o benchmark benchmark.o Simon.o timing.o YASHE/BitVector.o YASHE/Ciphertext.o YASHE/Entropy.o YASHE/Sampler.o YASHE/YASHEKey.o -L/opt/local/lib -lgmp -lgmpxx -lcrypto -lm -lmpfr -lflint
+
+benchmark.o:
+	g++ -I/usr/local/include -I/opt/local/include -O3 -fopenmp -Wall -pedantic -DYASHE  -g -c -o benchmark.o benchmark.cpp
 
 $(OBJECTS): Makefile $(HEADERS) 
 
